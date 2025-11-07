@@ -1,7 +1,7 @@
 # Kahoot-Quiz-Game-Moudle
 Creator : Poomipat Jitkrongsit
-Eng : A web-based quiz game inspired by Kahoot, designed for both hosts and players to join interactive question-and-answer sessions. The main goal is to get the highest score by answering questions correctly and as fast as possible.
-TH : โปรเจกต์นี้เป็นระบบเกมแบบ Quiz (แบบคล้าย Kahoot) ที่อาศัยไฟล์ JSON หรือข้อมูลคำถาม / คำตอบ เพื่อให้ผู้เล่นตอบคำถามและทำคะแนนให้ได้สูงสุด ผู้เล่นสามารถแข่งขันกันหรือเล่นแบบเดี่ยวก็ได้
+**Eng** : A web-based quiz game inspired by Kahoot, designed for both hosts and players to join interactive question-and-answer sessions. The main goal is to get the highest score by answering questions correctly and as fast as possible.
+**TH** : โปรเจกต์นี้เป็นระบบเกมแบบ Quiz (แบบคล้าย Kahoot) ที่อาศัยไฟล์ JSON หรือข้อมูลคำถาม / คำตอบ เพื่อให้ผู้เล่นตอบคำถามและทำคะแนนให้ได้สูงสุด ผู้เล่นสามารถแข่งขันกันหรือเล่นแบบเดี่ยวก็ได้
 วัตถุประสงค์คือ:
 - สร้างเกมที่เข้าใจง่าย – สามารถตั้งคำถาม-ตอบได้ทันที
 - รองรับการใช้งานในเว็บ (HTML / CSS / JS)
