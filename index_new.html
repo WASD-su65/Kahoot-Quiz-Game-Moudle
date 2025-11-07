@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Modern Quiz! - Quiz Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/lib/fonts-local.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/index.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo pulse">🎯 Modern Quiz!</div>
+        <div class="subtitle">Interactive Quiz Game Platform</div>
+        
+        <div class="options">
+            <a href="/host" class="option host-option">
+                <span class="option-icon">🎮</span>
+                <div>Host Game</div>
+                <small style="opacity: 0.8;">Create & Control</small>
+            </a>
+            <a href="/quick-join" class="option quick-option">
+                <span class="option-icon">⚡</span>
+                <div>เข้าเกมด่วน</div>
+                <small style="opacity: 0.8;">Find & Join</small>
+            </a>
+            <a href="/player" class="option play-option">
+                <span class="option-icon">📱</span>
+                <div>Join Game</div>
+                <small style="opacity: 0.8;">Enter PIN</small>
+            </a>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div>⚡ Real-time</div>
+                <small>Live gameplay</small>
+            </div>
+            <div class="feature">
+                <div>🏆 Leaderboard</div>
+                <small>Track scores</small>
+            </div>
+            <div class="feature" onclick="window.location.href='/analytics'" style="cursor: pointer;">
+                <div>📊 Analytics</div>
+                <small>View results</small>
+            </div>
+            <div class="feature">
+                <div>🎨 Beautiful UI</div>
+                <small>Modern design</small>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

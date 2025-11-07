@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Join Game - Modern Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/lib/fonts-local.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/player.css">
+</head>
+<body>
+    <a href="/" class="back-link">← Back</a>
+    
+    <div class="container">
+        <div class="logo">📱</div>
+        <div class="title">Join Game</div>
+        
+        <form id="joinForm">
+            <div class="form-group">
+                <input type="text" class="form-input pin-input" id="gamePin" placeholder="Game PIN" maxlength="6" required>
+            </div>
+            
+            <div class="form-group">
+                <div class="name-input-group">
+                    <input type="text" class="form-input" id="playerName" placeholder="Enter your name" maxlength="20" required>
+                    <button type="button" class="random-btn" onclick="generateRandomName()" title="สุ่มชื่อ">🎲</button>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn" id="joinBtn">🚀 Join Game</button>
+            
+            <div id="error" class="error" style="display: none;"></div>
+        </form>
+        
+        <button class="exit-btn" onclick="exitLobby()" id="exitBtn">🚪 Exit Lobby</button>
+        
+        <div class="instructions">
+            Enter the game PIN shown on the host's screen and your name to join the game.
+        </div>
+    </div>
+
+    <script src="/static/js/player.js"></script>
+</body>
+</html>

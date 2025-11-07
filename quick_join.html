@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>เข้าเกมด่วน - Modern Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/lib/fonts-local.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g"><stop offset="0%" stop-color="rgba(255,255,255,0.1)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="20" cy="20" r="2" fill="url(%23g)"><animate attributeName="cy" values="20;80;20" dur="3s" repeatCount="indefinite"/></circle><circle cx="80" cy="80" r="3" fill="url(%23g)"><animate attributeName="cy" values="80;20;80" dur="4s" repeatCount="indefinite"/></circle><circle cx="40" cy="60" r="1" fill="url(%23g)"><animate attributeName="cy" values="60;10;60" dur="2s" repeatCount="indefinite"/></circle></svg>') repeat;
+            animation: float 20s infinite linear;
+            pointer-events: none;
+        }
+        @keyframes float { 0% { transform: translateY(0px); } 100% { transform: translateY(-100px); } }
+        
+        .container { 
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .back-link {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+        
+        .back-link:hover {
+            color: white;
+            transform: translateX(-5px) scale(1.1);
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 800;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 0.5rem;
+            color: #f1f5f9;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 30px rgba(59, 130, 246, 0.3);
+            animation: titleGlow 3s ease-in-out infinite;
+            letter-spacing: -1px;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #cbd5e1;
+            font-weight: 500;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        
+        .games-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .game-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: cardSlideIn 0.6s ease-out;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        @keyframes cardSlideIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .game-card:hover::before { left: 100%; }
+        
+        .game-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            background: rgba(51, 65, 85, 0.9);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4), 0 0 30px rgba(59, 130, 246, 0.2);
+        }
+        
+        .game-pin {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: 'Poppins', sans-serif;
+            color: #3b82f6;
+            text-align: center;
+            margin-bottom: 1rem;
+            letter-spacing: 0.2rem;
+        }
+        
+        .game-host {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            color: #f1f5f9;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .player-count {
+            background: rgba(52, 152, 219, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .game-status {
+            background: rgba(46, 204, 113, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .no-games {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(148, 163, 184, 0.3);
+        }
+        
+        .no-games-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.6;
+        }
+        
+        .no-games-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+        }
+        
+        .no-games-subtitle {
+            color: #fff;
+            font-size: 1rem;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.6);
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .refresh-btn:hover {
+            transform: scale(1.1) rotate(180deg);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        .join-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .modal-content {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            padding: 3rem 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: modalSlideIn 0.4s ease-out;
+        }
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: scale(0.8) translateY(-50px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+        
+        .name-input-group {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .name-input {
+            width: 100%;
+            padding: 1.2rem 4rem 1.2rem 1.5rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1.1rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        
+        .name-input:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.15);
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+        
+        .name-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .random-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        
+        .random-btn:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .join-btn {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+        
+        .join-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+        
+        .cancel-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .cancel-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .title { font-size: 2.5rem; }
+            .container { padding: 0 0.5rem; }
+            .refresh-btn { bottom: 1rem; right: 1rem; width: 50px; height: 50px; }
+            .game-card { max-width: 350px; }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← กลับ</a>
+    
+    <div class="container">
+        <div class="header">
+            <div class="title">⚡ เข้าเกมด่วน</div>
+            <div class="subtitle">เลือกห้องที่เปิดให้เข้าเล่น</div>
+        </div>
+        
+        <div id="gamesContainer">
+            <div class="games-grid" id="gamesList">
+                <!-- Games will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <button class="refresh-btn" onclick="loadGames()" title="รีเฟรช">🔄</button>
+    
+    <!-- Join Modal -->
+    <div class="join-modal" id="joinModal">
+        <div class="modal-content">
+            <div class="modal-title">เข้าร่วมเกม</div>
+            <div class="name-input-group">
+                <input type="text" class="name-input" id="playerName" placeholder="ใส่ชื่อของคุณ" maxlength="20">
+                <button class="random-btn" onclick="generateRandomName()" title="สุ่มชื่อ">🎲</button>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" onclick="closeModal()">ยกเลิก</button>
+                <button class="modal-btn join-btn" onclick="joinSelectedGame()">เข้าร่วม</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPin = null;
+        
+        const randomNames = [
+            'นักสู้', 'เทพเกม', 'ฮีโร่', 'นินจา', 'ซามูไร', 'มังกร', 'ฟีนิกซ์', 'เสือ',
+            'หมาป่า', 'เหยี่ยว', 'ปลาฉลาม', 'สิงโต', 'เสือดาว', 'แพนด้า', 'โคอาล่า', 'ยูนิคอร์น',
+            'ดาวเหนือ', 'ฟ้าร้อง', 'พายุ', 'แสงแดด', 'พระจันทร์', 'ดาวตก', 'รุ้ง', 'ลมแรง',
+            'เพชร', 'ทอง', 'เงิน', 'ทับทิม', 'มรกต', 'ไข่มุก', 'คริสตัล', 'อำพัน'
+        ];
+        
+        function generateRandomName() {
+            const randomName = randomNames[Math.floor(Math.random() * randomNames.length)];
+            const randomNum = Math.floor(Math.random() * 999) + 1;
+            document.getElementById('playerName').value = randomName + randomNum;
+        }
+        
+        function loadGames() {
+            fetch('/api/active-games')
+                .then(response => response.json())
+                .then(data => {
+                    displayGames(data.games || []);
+                })
+                .catch(error => {
+                    console.error('Error loading games:', error);
+                    displayGames([]);
+                });
+        }
+        
+        function displayGames(games) {
+            const gamesList = document.getElementById('gamesList');
+            
+            if (games.length === 0) {
+                gamesList.innerHTML = `
+                    <div class="no-games">
+                        <div class="no-games-icon">🎮</div>
+                        <div class="no-games-text">ไม่มีเกมที่เปิดให้เข้าร่วม</div>
+                        <div class="no-games-subtitle">รอสักครู่หรือสร้างเกมใหม่</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            gamesList.innerHTML = games.map(game => `
+                <div class="game-card" onclick="openJoinModal('${game.pin}')">
+                    <div class="game-pin">${game.pin}</div>
+                    <div class="game-host">🎮 ${game.host}</div>
+                    <div class="game-info">
+                        <div class="player-count">👥 ${game.players} คน</div>
+                        <div class="game-status">🟢 รอผู้เล่น</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function openJoinModal(pin) {
+            selectedPin = pin;
+            document.getElementById('joinModal').style.display = 'flex';
+            document.getElementById('playerName').focus();
+        }
+        
+        function closeModal() {
+            document.getElementById('joinModal').style.display = 'none';
+            selectedPin = null;
+            document.getElementById('playerName').value = '';
+        }
+        
+        async function joinSelectedGame() {
+            const name = document.getElementById('playerName').value.trim();
+            
+            if (!name) {
+                alert('กรุณาใส่ชื่อ');
+                return;
+            }
+            
+            if (name.length < 2) {
+                alert('ชื่อต้องมีอย่างน้อย 2 ตัวอักษร');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/join-game', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin: selectedPin, name: name })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('playerName', name);
+                    window.location.href = `/player/game/${selectedPin}`;
+                } else {
+                    alert(data.error || 'ไม่สามารถเข้าร่วมเกมได้');
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('joinModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        // Enter key to join
+        document.getElementById('playerName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                joinSelectedGame();
+            }
+        });
+        
+        // Load games on page load
+        loadGames();
+        
+        // Auto refresh every 5 seconds
+        setInterval(loadGames, 5000);
+    </script>
+</body>
+</html>

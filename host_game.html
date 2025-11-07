@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Host Game - Kahoot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/lib/fonts-local.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding: 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g"><stop offset="0%" stop-color="rgba(255,255,255,0.1)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="20" cy="20" r="2" fill="url(%23g)"><animate attributeName="cy" values="20;80;20" dur="3s" repeatCount="indefinite"/></circle><circle cx="80" cy="80" r="3" fill="url(%23g)"><animate attributeName="cy" values="80;20;80" dur="4s" repeatCount="indefinite"/></circle><circle cx="40" cy="60" r="1" fill="url(%23g)"><animate attributeName="cy" values="60;10;60" dur="2s" repeatCount="indefinite"/></circle></svg>') repeat;
+            animation: float 20s infinite linear;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes float { 0% { transform: translateY(0px); } 100% { transform: translateY(-100px); } }
+        
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 2rem;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: headerSlide 0.8s ease-out;
+        }
+        @keyframes headerSlide {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pin { 
+            font-size: 1.8rem; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, #f1c40f, #e67e22);
+            padding: 1rem 2rem; 
+            border-radius: 15px;
+            color: #1a1a1a;
+            box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+            animation: pinGlow 2s ease-in-out infinite alternate;
+        }
+        @keyframes pinGlow {
+            from { box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3); }
+            to { box-shadow: 0 8px 25px rgba(241, 196, 15, 0.6); }
+        }
+        
+        .progress { 
+            font-size: 1.3rem; 
+            font-weight: 600;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 0.8rem 1.5rem;
+            border-radius: 15px;
+        }
+        
+        .question-display { 
+            background: rgba(30, 41, 59, 0.9); 
+            backdrop-filter: blur(20px);
+            padding: 3rem; 
+            border-radius: 30px; 
+            margin: 2rem 0;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            animation: displaySlide 0.6s ease-out;
+        }
+        @keyframes displaySlide {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .question-text { 
+            font-size: 3.2rem; 
+            margin-bottom: 3rem; 
+            font-weight: 800; 
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.2;
+            color: #f1f5f9;
+            text-shadow: 0 4px 25px rgba(0,0,0,0.6);
+            animation: questionGlow 3s ease-in-out infinite alternate;
+            letter-spacing: -1px;
+        }
+        @keyframes questionGlow {
+            from { filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); }
+            to { filter: drop-shadow(0 0 20px rgba(255,255,255,0.6)); }
+        }
+        
+        .options-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 2.5rem; 
+            margin: 3rem 0;
+        }
+        
+        .option { 
+            padding: 3rem 2rem; 
+            border-radius: 25px; 
+            font-size: 1.8rem; 
+            font-weight: 700;
+            color: #fff;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+            animation: optionFloat 4s ease-in-out infinite;
+        }
+        .option:nth-child(1) { animation-delay: 0s; }
+        .option:nth-child(2) { animation-delay: 1s; }
+        .option:nth-child(3) { animation-delay: 2s; }
+        .option:nth-child(4) { animation-delay: 3s; }
+        @keyframes optionFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        
+        .option::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+        .option:hover::before { left: 100%; }
+        .option:hover { transform: translateY(-10px) scale(1.05); animation: none; }
+        
+        .option-a { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .option-b { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .option-c { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .option-d { background: linear-gradient(135deg, #27ae60, #229954); }
+        
+        .timer-section { margin: 3rem 0; }
+        
+        .timer-bar { 
+            width: 100%; 
+            height: 30px; 
+            background: rgba(255,255,255,0.2); 
+            border-radius: 20px; 
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .timer-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, #27ae60, #f1c40f, #e74c3c); 
+            width: 100%;
+            transition: width 1s linear;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        
+        .timer-text { 
+            font-size: 1.8rem; 
+            margin-bottom: 1rem; 
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.7), 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .stats { 
+            display: flex; 
+            justify-content: space-around; 
+            margin: 3rem 0;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(15px);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .stat-item { 
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .stat-item:hover { transform: translateY(-5px) scale(1.05); }
+        
+        .stat-number { 
+            font-size: 2.5rem; 
+            font-weight: 800; 
+            display: block;
+            color: #f1c40f;
+            text-shadow: 0 0 15px rgba(0,0,0,0.8), 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        
+        .stat-label { 
+            font-size: 1.1rem; 
+            color: #fff;
+            font-weight: 500;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.6);
+        }
+        
+        .btn { 
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: #fff; 
+            padding: 1.5rem 3rem; 
+            border: none; 
+            border-radius: 20px; 
+            font-size: 1.4rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 1rem;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .btn:hover::before { left: 100%; }
+        
+        .btn:hover { 
+            transform: translateY(-5px) scale(1.08); 
+            box-shadow: 0 15px 35px rgba(39, 174, 96, 0.4);
+        }
+        
+        .results-breakdown { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 2rem; 
+            margin: 3rem 0;
+        }
+        
+        .breakdown-item { 
+            padding: 2rem; 
+            border-radius: 20px; 
+            font-weight: 700;
+            transition: all 0.4s;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+            animation: breakdownSlide 0.6s ease-out;
+        }
+        .breakdown-item:nth-child(1) { animation-delay: 0.1s; }
+        .breakdown-item:nth-child(2) { animation-delay: 0.2s; }
+        .breakdown-item:nth-child(3) { animation-delay: 0.3s; }
+        .breakdown-item:nth-child(4) { animation-delay: 0.4s; }
+        @keyframes breakdownSlide {
+            from { opacity: 0; transform: translateY(30px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .breakdown-item::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+        .breakdown-item:hover::before { left: 100%; }
+        .breakdown-item:hover { transform: translateY(-8px) scale(1.05); }
+        
+        .breakdown-count { 
+            font-size: 2.5rem; 
+            display: block;
+            color: #fff;
+        }
+        
+        .breakdown-label { 
+            font-size: 1.1rem; 
+            opacity: 0.9; 
+            margin-top: 0.5rem;
+            color: #fff;
+        }
+        
+        .leaderboard { 
+            background: rgba(255,255,255,0.15); 
+            backdrop-filter: blur(20px);
+            padding: 3rem; 
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .leaderboard-title { 
+            font-size: 3rem; 
+            margin-bottom: 2rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #f1c40f, #e67e22);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+        
+        .leader-item { 
+            background: rgba(255,255,255,0.15); 
+            backdrop-filter: blur(15px);
+            padding: 2rem; 
+            margin: 1.5rem 0; 
+            border-radius: 20px;
+            font-size: 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: leaderSlide 0.6s ease-out;
+        }
+        @keyframes leaderSlide {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .leader-item:hover { transform: translateY(-5px) scale(1.02); }
+        
+        .leader-rank { 
+            font-weight: 800; 
+            font-size: 1.6rem;
+        }
+        
+        .leader-name { 
+            flex-grow: 1; 
+            text-align: left; 
+            margin-left: 1rem;
+            font-weight: 600;
+        }
+        
+        .leader-score { 
+            font-weight: 800; 
+            background: linear-gradient(45deg, #f1c40f, #e67e22);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.3rem;
+        }
+        
+        .podium { 
+            display: flex; 
+            justify-content: center; 
+            align-items: end; 
+            margin: 3rem 0; 
+            gap: 2rem;
+        }
+        
+        .podium-item { 
+            text-align: center;
+            padding: 2.5rem 2rem;
+            border-radius: 20px;
+            transition: all 0.4s;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            animation: podiumRise 0.8s ease-out;
+        }
+        .podium-item:nth-child(1) { animation-delay: 0.2s; }
+        .podium-item:nth-child(2) { animation-delay: 0s; }
+        .podium-item:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes podiumRise {
+            from { opacity: 0; transform: translateY(50px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .podium-1 { 
+            order: 2; 
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            transform: scale(1.1);
+        }
+        .podium-2 { 
+            order: 1; 
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d); 
+        }
+        .podium-3 { 
+            order: 3; 
+            background: linear-gradient(135deg, #e67e22, #d35400); 
+        }
+        
+        .podium-rank { 
+            font-size: 3.5rem; 
+            font-weight: 800;
+        }
+        
+        .podium-name { 
+            font-size: 1.3rem; 
+            margin: 1rem 0;
+            font-weight: 600;
+        }
+        
+        .podium-score { 
+            font-size: 1.6rem; 
+            font-weight: 700;
+        }
+        
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.6s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .countdown-display {
+            font-size: 20rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #f1c40f, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: countdownPulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes countdownPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 0.5rem; }
+            .container { max-width: 100%; }
+            .header { 
+                flex-direction: column; 
+                gap: 1rem;
+                padding: 1rem;
+            }
+            .pin { 
+                font-size: 1.3rem;
+                padding: 0.8rem 1.5rem;
+            }
+            .progress { 
+                font-size: 1.1rem;
+                padding: 0.6rem 1rem;
+            }
+            .question-display {
+                padding: 1.5rem;
+                margin: 1rem 0;
+            }
+            .question-text { 
+                font-size: 1.8rem;
+                margin-bottom: 1.5rem;
+                line-height: 1.3;
+            }
+            .options-grid { 
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin: 1.5rem 0;
+            }
+            .option {
+                padding: 1.5rem 1rem;
+                font-size: 1.2rem;
+                text-align: center;
+            }
+            .timer-section { margin: 1.5rem 0; }
+            .timer-text { font-size: 1.3rem; }
+            .timer-bar { height: 20px; }
+            .stats { 
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            .stat-item { flex: 1; min-width: 80px; }
+            .stat-number { font-size: 1.8rem; }
+            .stat-label { font-size: 0.9rem; }
+            .results-breakdown { 
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+                margin: 1.5rem 0;
+            }
+            .breakdown-item {
+                padding: 1rem;
+            }
+            .breakdown-count { font-size: 1.8rem; }
+            .breakdown-label { font-size: 0.9rem; }
+            .countdown-display { font-size: 8rem; }
+            .leaderboard {
+                padding: 1.5rem;
+            }
+            .leaderboard-title { font-size: 2rem; }
+            .leader-item {
+                padding: 1rem;
+                font-size: 1rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+            .leader-rank, .leader-name, .leader-score {
+                font-size: 1rem;
+            }
+            .podium { 
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+            .podium-item {
+                padding: 1.5rem;
+                width: 200px;
+            }
+            .podium-rank { font-size: 2.5rem; }
+            .podium-name { font-size: 1.1rem; }
+            .podium-score { font-size: 1.3rem; }
+            .btn {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+                margin: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .question-text { font-size: 1.4rem; }
+            .option {
+                padding: 1rem 0.8rem;
+                font-size: 1rem;
+            }
+            .countdown-display { font-size: 5rem; }
+            .results-breakdown { grid-template-columns: 1fr; }
+            .stats { flex-direction: column; }
+            .stat-item { min-width: auto; }
+            .pin { font-size: 1.1rem; }
+            .progress { font-size: 1rem; }
+            .btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="pin">PIN: {{ pin }}</div>
+            <div class="progress" id="progress">Question 0 of 0</div>
+        </div>
+        
+        <div id="waiting" class="question-display">
+            <h2>🎯 Ready to Start!</h2>
+            <p style="font-size: 1.4rem; margin: 2rem 0; opacity: 0.9;">Game will start automatically</p>
+        </div>
+        
+        <div id="countdown" class="question-display hidden">
+            <div class="countdown-display" id="countdownNumber">3</div>
+            <div style="font-size: 2.5rem; margin-top: 2rem; font-weight: 600;">Get Ready!</div>
+        </div>
+        
+        <div id="question" class="question-display hidden">
+            <div class="question-text" id="questionText"></div>
+            <div class="options-grid">
+                <div class="option option-a">
+                    <div class="option-content" id="optionA"></div>
+                </div>
+                <div class="option option-b">
+                    <div class="option-content" id="optionB"></div>
+                </div>
+                <div class="option option-c">
+                    <div class="option-content" id="optionC"></div>
+                </div>
+                <div class="option option-d">
+                    <div class="option-content" id="optionD"></div>
+                </div>
+            </div>
+            <div class="timer-section">
+                <div class="timer-text" id="timerText">Time: 15s</div>
+                <div class="timer-bar">
+                    <div class="timer-fill" id="timerFill"></div>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="answeredCount">0</span>
+                    <span class="stat-label">Answered</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalPlayers">0</span>
+                    <span class="stat-label">Total Players</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="percentAnswered">0%</span>
+                    <span class="stat-label">Response Rate</span>
+                </div>
+            </div>
+            <div style="opacity: 0.8; font-size: 1.1rem; margin-top: 1rem;">Results will show automatically when time runs out or all players answer</div>
+        </div>
+        
+        <div id="results" class="question-display hidden">
+            <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">📊 Results</h2>
+            <div id="correctAnswer" style="font-size: 2rem; margin: 2rem 0; font-weight: 600;"></div>
+            <div class="results-breakdown">
+                <div class="breakdown-item option-a">
+                    <span class="breakdown-count" id="countA">0</span>
+                    <span class="breakdown-label">Option A</span>
+                </div>
+                <div class="breakdown-item option-b">
+                    <span class="breakdown-count" id="countB">0</span>
+                    <span class="breakdown-label">Option B</span>
+                </div>
+                <div class="breakdown-item option-c">
+                    <span class="breakdown-count" id="countC">0</span>
+                    <span class="breakdown-label">Option C</span>
+                </div>
+                <div class="breakdown-item option-d">
+                    <span class="breakdown-count" id="countD">0</span>
+                    <span class="breakdown-label">Option D</span>
+                </div>
+            </div>
+            <button class="btn" onclick="showLeaderboard()">🏆 Show Leaderboard</button>
+        </div>
+        
+        <div id="leaderboard" class="leaderboard hidden">
+            <h2 class="leaderboard-title">🏆 Leaderboard</h2>
+            <div id="leaderboardList"></div>
+            <button class="btn" id="nextBtn" onclick="nextQuestion()">➡️ Next Question</button>
+        </div>
+        
+        <div id="finishing" class="question-display hidden">
+            <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">🏁 Finishing Game...</h2>
+            <div style="width: 80px; height: 80px; border: 8px solid rgba(255,255,255,0.3); border-top: 8px solid #f1c40f; border-radius: 50%; animation: spin 1s linear infinite; margin: 2rem auto;"></div>
+            <div style="font-size: 1.4rem; margin: 1rem 0; opacity: 0.8;">Saving results and calculating final scores...</div>
+            <div id="finishProgress" style="font-size: 1.2rem; color: #27ae60; margin-top: 1rem;">Processing...</div>
+        </div>
+        
+        <div id="finished" class="question-display hidden">
+            <h2 style="font-size: 3rem; margin-bottom: 2rem;">🎉 Game Finished!</h2>
+            <div id="podium" class="podium"></div>
+            <div id="finalLeaderboard"></div>
+            <div style="margin-top: 3rem;">
+                <button class="btn" onclick="location.href='/'">🏠 Home</button>
+                <button class="btn" onclick="location.href='/host'" style="background: linear-gradient(135deg, #3498db, #2980b9);">🎯 Create New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/lib/socket.io.js"></script>
+    <script src="/static/shared/sounds.js"></script>
+    <script>
+
+        const socket = io();
+        const pin = '{{ pin }}';
+        let currentQuestion = 0;
+        let totalQuestions = 0;
+        let currentTimer = null;
+        let gameStarted = false;
+        
+        socket.emit('host_join', { pin });
+        
+        setTimeout(() => {
+            if (!gameStarted) {
+                socket.emit('start_game', { pin });
+                gameStarted = true;
+            }
+        }, 2000);
+        
+        socket.on('start_countdown', () => {
+            hideAll();
+            document.getElementById('countdown').classList.remove('hidden');
+            
+            let count = 3;
+            const countdownEl = document.getElementById('countdownNumber');
+            
+            const countdownInterval = setInterval(() => {
+                countdownEl.textContent = count;
+                soundManager.play('countdown');
+                count--;
+                
+                if (count < 0) {
+                    clearInterval(countdownInterval);
+                    countdownEl.textContent = 'GO!';
+                    setTimeout(() => {
+                        document.getElementById('countdown').classList.add('hidden');
+                    }, 500);
+                }
+            }, 1000);
+        });
+        
+        socket.on('show_question', (data) => {
+            hideAll();
+            document.getElementById('question').classList.remove('hidden');
+            document.getElementById('question').classList.add('fade-in');
+            
+            currentQuestion = data.number || 1;
+            totalQuestions = data.total || 1;
+            
+            document.getElementById('progress').textContent = `Question ${currentQuestion} of ${totalQuestions}`;
+            // Function to safely display text with special characters
+            function safeDisplayText(text) {
+                return text.replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+            }
+            
+            document.getElementById('questionText').innerHTML = safeDisplayText(data.question);
+            
+            // Show question image if exists
+            const existingImage = document.querySelector('.question-image');
+            if (existingImage) existingImage.remove();
+            
+            if (data.image) {
+                const imageEl = document.createElement('div');
+                imageEl.className = 'question-image';
+                imageEl.innerHTML = `<img src="${data.image}" alt="Question image" style="max-width: 100%; max-height: 500px; margin: 2rem 0; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">`;
+                document.getElementById('questionText').appendChild(imageEl);
+            }
+            document.getElementById('optionA').innerHTML = safeDisplayText(data.options.A);
+            document.getElementById('optionB').innerHTML = safeDisplayText(data.options.B);
+            document.getElementById('optionC').innerHTML = safeDisplayText(data.options.C);
+            document.getElementById('optionD').innerHTML = safeDisplayText(data.options.D);
+            
+            document.getElementById('answeredCount').textContent = '0';
+            document.getElementById('percentAnswered').textContent = '0%';
+            
+            startTimer(data.time_limit || 15);
+        });
+        
+        socket.on('answer_count', (data) => {
+            document.getElementById('answeredCount').textContent = data.answered;
+            document.getElementById('totalPlayers').textContent = data.total;
+            const percent = data.total > 0 ? Math.round((data.answered / data.total) * 100) : 0;
+            document.getElementById('percentAnswered').textContent = percent + '%';
+        });
+        
+        socket.on('show_results', (data) => {
+            hideAll();
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('results').classList.add('fade-in');
+            
+            // Function to safely display text with special characters
+            function safeDisplayText(text) {
+                return text.replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+            }
+            
+            document.getElementById('correctAnswer').innerHTML = `✅ Correct Answer: <strong>${data.correct}) ${safeDisplayText(data.correct_text)}</strong>`;
+            
+            document.getElementById('countA').textContent = data.breakdown.A || 0;
+            document.getElementById('countB').textContent = data.breakdown.B || 0;
+            document.getElementById('countC').textContent = data.breakdown.C || 0;
+            document.getElementById('countD').textContent = data.breakdown.D || 0;
+        });
+        
+        socket.on('show_leaderboard', (data) => {
+            hideAll();
+            document.getElementById('leaderboard').classList.remove('hidden');
+            document.getElementById('leaderboard').classList.add('fade-in');
+            
+            let html = '';
+            data.leaderboard.forEach((player, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                html += `<div class="leader-item">
+                    <span class="leader-rank">${medal} ${index + 1}</span>
+                    <span class="leader-name">${player[0]}</span>
+                    <span class="leader-score">${player[1].score} pts</span>
+                </div>`;
+            });
+            document.getElementById('leaderboardList').innerHTML = html;
+            
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentQuestion >= totalQuestions) {
+                nextBtn.textContent = '🏁 Finish Game';
+            } else {
+                nextBtn.textContent = '➡️ Next Question';
+            }
+        });
+        
+        socket.on('game_finished', (data) => {
+            // Hide finishing indicator and show results
+            hideAll();
+            document.getElementById('finished').classList.remove('hidden');
+            document.getElementById('finished').classList.add('fade-in');
+            
+            let podiumHtml = '';
+            if (data.top3 && data.top3.length > 0) {
+                data.top3.forEach((player, index) => {
+                    const rank = index + 1;
+                    const medals = ['🥇', '🥈', '🥉'];
+                    podiumHtml += `<div class="podium-item podium-${rank}">
+                        <div class="podium-rank">${medals[index]}</div>
+                        <div class="podium-name">${player[0]}</div>
+                        <div class="podium-score">${player[1].score} pts</div>
+                    </div>`;
+                });
+            }
+            document.getElementById('podium').innerHTML = podiumHtml;
+            
+            let html = `<h3 style="margin: 2rem 0; font-size: 1.8rem;">Final Rankings (Top 10 of ${data.total_players} players):</h3>`;
+            data.leaderboard.forEach((player, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                html += `<div class="leader-item">
+                    <span class="leader-rank">${medal} ${index + 1}</span>
+                    <span class="leader-name">${player[0]}</span>
+                    <span class="leader-score">${player[1].score} pts</span>
+                </div>`;
+            });
+            document.getElementById('finalLeaderboard').innerHTML = html;
+        });
+        
+        function hideAll() {
+            document.querySelectorAll('.question-display, .leaderboard').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('fade-in');
+            });
+            if (currentTimer) {
+                clearInterval(currentTimer);
+                currentTimer = null;
+            }
+        }
+        
+        function startTimer(seconds) {
+            let timeLeft = seconds;
+            const timerFill = document.getElementById('timerFill');
+            const timerText = document.getElementById('timerText');
+            
+            timerText.textContent = `Time: ${timeLeft}s`;
+            
+            currentTimer = setInterval(() => {
+                timeLeft--;
+                timerText.textContent = `Time: ${Math.max(0, timeLeft)}s`;
+                timerFill.style.width = Math.max(0, (timeLeft / seconds * 100)) + '%';
+                
+                if (timeLeft <= 0) {
+                    clearInterval(currentTimer);
+                    currentTimer = null;
+                    timerText.textContent = 'Time: 0s';
+                    timerFill.style.width = '0%';
+                }
+            }, 1000);
+        }
+        
+        function nextQuestion() {
+            // Show finishing indicator if this is the last question
+            if (currentQuestion >= totalQuestions) {
+                hideAll();
+                document.getElementById('finishing').classList.remove('hidden');
+                
+                // Update progress text
+                setTimeout(() => {
+                    document.getElementById('finishProgress').textContent = 'Calculating final scores...';
+                }, 1000);
+                
+                setTimeout(() => {
+                    document.getElementById('finishProgress').textContent = 'Saving to database...';
+                }, 2000);
+            }
+            
+            socket.emit('next_question', { pin });
+        }
+        
+        function showLeaderboard() {
+            socket.emit('show_leaderboard', { pin });
+        }
+    </script>
+</body>
+</html>

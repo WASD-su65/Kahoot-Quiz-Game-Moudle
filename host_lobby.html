@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Lobby - Modern Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/lib/fonts-local.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding: 2rem;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g"><stop offset="0%" stop-color="rgba(255,255,255,0.1)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="20" cy="20" r="2" fill="url(%23g)"><animate attributeName="cy" values="20;80;20" dur="3s" repeatCount="indefinite"/></circle><circle cx="80" cy="80" r="3" fill="url(%23g)"><animate attributeName="cy" values="80;20;80" dur="4s" repeatCount="indefinite"/></circle><circle cx="40" cy="60" r="1" fill="url(%23g)"><animate attributeName="cy" values="60;10;60" dur="2s" repeatCount="indefinite"/></circle></svg>') repeat;
+            animation: float 20s infinite linear;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes float { 0% { transform: translateY(0px); } 100% { transform: translateY(-100px); } }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            animation: containerSlide 0.8s ease-out;
+        }
+        @keyframes containerSlide {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header {
+            margin-bottom: 3rem;
+        }
+        
+        .game-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 1rem;
+            color: #f1f5f9;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 30px rgba(59, 130, 246, 0.3);
+            animation: titleGlow 3s ease-in-out infinite;
+            letter-spacing: -1px;
+        }
+        @keyframes titleGlow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(255,255,255,0.4)); }
+            50% { filter: drop-shadow(0 0 40px rgba(255,255,255,0.8)); }
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .pin-display { 
+            font-size: 10rem; 
+            font-weight: 900; 
+            margin: 2rem 0;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            padding: 2rem 3rem;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            display: inline-block;
+            letter-spacing: 0.3rem;
+            animation: pinGlow 3s ease-in-out infinite alternate;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pin-display::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes pinGlow {
+            from { box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 0 30px rgba(255,255,255,0.2); }
+            to { box-shadow: 0 25px 50px rgba(0,0,0,0.2), 0 0 50px rgba(255,255,255,0.4); }
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .instruction { 
+            font-size: 1.8rem; 
+            margin-bottom: 3rem;
+            opacity: 0.95;
+            font-weight: 600;
+            color: #cbd5e1;
+            text-shadow: 0 3px 15px rgba(0,0,0,0.4);
+            animation: instructionSlide 0.6s ease-out 0.3s both;
+        }
+        @keyframes instructionSlide {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 0.9; transform: translateY(0); }
+        }
+        
+        .stats-section {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 2.5rem;
+            border-radius: 25px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            min-width: 220px;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+            animation: statSlide 0.6s ease-out;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .stat-card:nth-child(1) { animation-delay: 0.4s; }
+        .stat-card:nth-child(2) { animation-delay: 0.6s; }
+        @keyframes statSlide {
+            from { opacity: 0; transform: translateY(30px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .stat-card:hover::before { left: 100%; }
+        .stat-card:hover { 
+            transform: translateY(-8px) scale(1.05); 
+            background: rgba(51, 65, 85, 0.9);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+        
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 800;
+            font-family: 'Poppins', sans-serif;
+            display: block;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+        
+        .players-section {
+            margin: 4rem 0;
+        }
+        
+        .players-title {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+            color: #f1f5f9;
+            animation: playersSlide 0.6s ease-out 0.8s both;
+        }
+        @keyframes playersSlide {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 0.9; transform: translateX(0); }
+        }
+        
+        .players-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+            gap: 1.5rem; 
+            margin: 2rem 0;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .player-card { 
+            background: rgba(30, 41, 59, 0.8); 
+            backdrop-filter: blur(20px);
+            padding: 2rem; 
+            border-radius: 25px;
+            animation: playerSlideIn 0.6s ease-out;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        
+        .player-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.6s;
+        }
+        
+        .player-card:hover::before { left: 100%; }
+        .player-card:hover { 
+            transform: translateY(-10px) scale(1.05); 
+            background: rgba(51, 65, 85, 0.9);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+        
+        .player-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #e74c3c, #f39c12, #27ae60, #3498db);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin: 0 auto 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: avatarSpin 3s ease-in-out infinite;
+        }
+        @keyframes avatarSpin {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(5deg) scale(1.1); }
+        }
+        
+        .player-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            font-family: 'Roboto', sans-serif;
+            position: relative;
+            z-index: 2;
+            color: #f1f5f9;
+        }
+        
+        @keyframes playerSlideIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .start-btn { 
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; 
+            padding: 2rem 5rem; 
+            border: none; 
+            border-radius: 25px; 
+            font-size: 1.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            animation: btnSlide 0.6s ease-out 1s both;
+        }
+        @keyframes btnSlide {
+            from { opacity: 0; transform: translateY(30px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .start-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .start-btn:hover::before { left: 100%; }
+        
+        .start-btn:hover { 
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-8px) scale(1.08);
+            box-shadow: 0 20px 50px rgba(16, 185, 129, 0.5);
+        }
+        
+        .start-btn:disabled { 
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            cursor: not-allowed; 
+            transform: none;
+            opacity: 0.7;
+        }
+
+        .game-actions {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 3rem;
+        }
+
+        .exit-btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 2rem 5rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 15px 40px rgba(239, 68, 68, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .exit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .exit-btn:hover::before { left: 100%; }
+
+        .exit-btn:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-8px) scale(1.08);
+            box-shadow: 0 20px 50px rgba(239, 68, 68, 0.5);
+        }
+        
+        .waiting-message {
+            font-size: 1.5rem;
+            opacity: 0.7;
+            margin-top: 2rem;
+            animation: waitingPulse 2s infinite;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            grid-column: 1 / -1;
+            text-align: center;
+            justify-self: center;
+        }
+        
+        @keyframes waitingPulse {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.02); }
+        }
+        
+        .back-link {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+            z-index: 10;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 0.8rem 1.2rem;
+            border-radius: 15px;
+            animation: backSlide 0.6s ease-out;
+        }
+        @keyframes backSlide {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 0.8; transform: translateX(0); }
+        }
+        
+        .back-link:hover {
+            color: white;
+            transform: translateX(-5px) scale(1.05);
+            background: rgba(255,255,255,0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .pin-display { 
+                font-size: 6rem; 
+                padding: 1.5rem 2rem;
+            }
+            .instruction { font-size: 1.4rem; }
+            .stats-section { flex-direction: column; align-items: center; gap: 2rem; }
+            .players-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+            .game-actions { flex-direction: column; gap: 1rem; }
+            .start-btn, .exit-btn { 
+                padding: 1.5rem 3rem; 
+                font-size: 1.5rem;
+            }
+            .game-title { font-size: 2rem; }
+        }
+        
+        @media (max-width: 480px) {
+            .pin-display { 
+                font-size: 4rem; 
+                padding: 1rem 1.5rem;
+            }
+            .container { padding: 1rem; }
+            body { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <a href="/host" class="back-link">← Back</a>
+    
+    <div class="container">
+        <div class="header">
+            <div class="game-title">🎯 Game Lobby</div>
+            <div class="pin-display">{{ pin }}</div>
+            <div class="instruction">Players join at <strong>game.compare.local</strong> with this PIN</div>
+        </div>
+        
+        <div class="stats-section">
+            <div class="stat-card">
+                <span class="stat-number" id="playerCount">0</span>
+                <span class="stat-label">Players Joined</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">🎮</span>
+                <span class="stat-label">Ready to Play</span>
+            </div>
+        </div>
+        
+        <div class="players-section">
+            <div class="players-title">👥 Players in Lobby</div>
+            <div class="players-grid" id="playersGrid">
+                <div class="waiting-message" style="grid-column: 1 / -1; text-align: center;">Waiting for players to join...</div>
+            </div>
+        </div>
+        
+        <div class="game-actions">
+            <button class="start-btn" id="startBtn" onclick="startGame()" disabled>
+                🚀 Start Game
+            </button>
+            <button class="exit-btn" onclick="exitGame()">
+                🚪 Exit Game
+            </button>
+        </div>
+    </div>
+
+    <script src="/static/lib/socket.io.js"></script>
+    <script src="/static/shared/sounds.js"></script>
+    <script>
+        const socket = io();
+        const pin = '{{ pin }}';
+        let playerCount = 0;
+        const players = new Set();
+        
+        console.log('Host joining room:', pin);
+        socket.emit('host_join', { pin });
+        
+        socket.on('player_joined', (data) => {
+            console.log('Player joined event received:', data);
+            playerCount = data.count;
+            document.getElementById('playerCount').textContent = playerCount;
+            
+            // Add player to grid if not already there
+            if (!players.has(data.name)) {
+                players.add(data.name);
+                addPlayerToGrid(data.name);
+                soundManager.play('join');
+            }
+            
+            // Enable start button if players joined
+            const startBtn = document.getElementById('startBtn');
+            if (playerCount > 0) {
+                startBtn.disabled = false;
+                // Remove waiting message
+                const waitingMsg = document.querySelector('.waiting-message');
+                if (waitingMsg) waitingMsg.remove();
+            }
+        });
+        
+        // Handle player timeout (not applicable for host)
+        socket.on('player_timeout', (data) => {
+            // Host doesn't get individual timeouts
+        });
+        
+        function addPlayerToGrid(playerName) {
+            const playersGrid = document.getElementById('playersGrid');
+            
+            // Limit display to 50 players max
+            const existingCards = playersGrid.querySelectorAll('.player-card');
+            if (existingCards.length >= 50) {
+                return; // Don't add more visual cards
+            }
+            
+            const playerCard = document.createElement('div');
+            playerCard.className = 'player-card';
+            
+            // Generate avatar emoji based on name
+            const avatars = ['👤', '🧑', '👩', '🧔', '👨', '🧑💼', '👩💼', '🧑🎓', '👩🎓', '🧑💻'];
+            const avatarIndex = playerName.length % avatars.length;
+            
+            playerCard.innerHTML = `
+                <div class="player-avatar">${avatars[avatarIndex]}</div>
+                <div class="player-name">${playerName}</div>
+            `;
+            
+            playersGrid.appendChild(playerCard);
+            
+            // Show overflow message if more than 50 players
+            if (playerCount > 50 && !document.getElementById('overflowMessage')) {
+                const overflowMsg = document.createElement('div');
+                overflowMsg.id = 'overflowMessage';
+                overflowMsg.className = 'waiting-message';
+                overflowMsg.textContent = `... and ${playerCount - 50} more players`;
+                playersGrid.appendChild(overflowMsg);
+            } else if (playerCount > 50) {
+                const overflowMsg = document.getElementById('overflowMessage');
+                if (overflowMsg) {
+                    overflowMsg.textContent = `... and ${playerCount - 50} more players`;
+                }
+            }
+        }
+        
+        function startGame() {
+            if (playerCount === 0) {
+                alert('Need at least 1 player to start the game!');
+                return;
+            }
+            
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = true;
+            startBtn.textContent = '🎮 Starting Game...';
+            
+            // Redirect to game immediately
+            window.location.href = `/host/game/${pin}`;
+        }
+
+        function exitGame() {
+            if (confirm('Are you sure you want to exit? This will end the game for all players.')) {
+                socket.emit('end_game', {room: pin});
+                window.location.href = '/host';
+            }
+        }
+    </script>
+</body>
+</html>

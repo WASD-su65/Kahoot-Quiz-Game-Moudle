@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "created": "2025-01-04T00:00:00.000Z",
+  "questions": [
+    {
+      "question": "What is the capital of Thailand?",
+      "options": {
+        "A": "Bangkok",
+        "B": "Chiang Mai", 
+        "C": "Phuket",
+        "D": "Pattaya"
+      },
+      "correct": "A",
+      "image": ""
+    },
+    {
+      "question": "Which programming language is known for web development?",
+      "options": {
+        "A": "C++",
+        "B": "JavaScript",
+        "C": "Assembly",
+        "D": "COBOL"
+      },
+      "correct": "B",
+      "image": ""
+    },
+    {
+      "question": "What does HTML stand for?",
+      "options": {
+        "A": "Hypertext Markup Language",
+        "B": "High Tech Modern Language",
+        "C": "Home Tool Markup Language", 
+        "D": "Hyperlink and Text Markup Language"
+      },
+      "correct": "A",
+      "image": ""
+    },
+    {
+      "question": "Which company developed React?",
+      "options": {
+        "A": "Google",
+        "B": "Microsoft",
+        "C": "Facebook",
+        "D": "Apple"
+      },
+      "correct": "C",
+      "image": ""
+    },
+    {
+      "question": "What is the largest planet in our solar system?",
+      "options": {
+        "A": "Earth",
+        "B": "Jupiter",
+        "C": "Saturn",
+        "D": "Neptune"
+      },
+      "correct": "B",
+      "image": ""
+    }
+  ]
+}

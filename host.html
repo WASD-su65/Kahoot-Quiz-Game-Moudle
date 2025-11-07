@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Game - Modern Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/lib/fonts-local.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding: 2rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g"><stop offset="0%" stop-color="rgba(255,255,255,0.05)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="20" cy="20" r="2" fill="url(%23g)"><animate attributeName="cy" values="20;80;20" dur="3s" repeatCount="indefinite"/></circle><circle cx="80" cy="80" r="3" fill="url(%23g)"><animate attributeName="cy" values="80;20;80" dur="4s" repeatCount="indefinite"/></circle></svg>') repeat;
+            animation: float 20s infinite linear;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes float { 0% { transform: translateY(0px); } 100% { transform: translateY(-100px); } }
+        
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+            z-index: 1;
+            animation: containerSlideUp 0.8s ease-out;
+        }
+        @keyframes containerSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f8f9fa;
+        }
+        
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 0.5rem;
+            color: #f1f5f9;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 0.5rem;
+            color: #e2e8f0;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.8);
+            color: #f1f5f9;
+            font-size: 1rem;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.3s ease;
+            animation: inputFadeIn 0.6s ease-out 0.2s both;
+        }
+        @keyframes inputFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            background: rgba(15, 23, 42, 0.9);
+        }
+        
+        .wizard-container {
+            margin: 2rem 0;
+        }
+        
+        .wizard-nav {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 0.5rem;
+            scrollbar-width: thin;
+            scrollbar-color: #3b82f6 rgba(148, 163, 184, 0.3);
+        }
+        
+        .wizard-nav::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .wizard-nav::-webkit-scrollbar-track {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 4px;
+        }
+        
+        .wizard-nav::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 4px;
+        }
+        
+        .wizard-nav::-webkit-scrollbar-thumb:hover {
+            background: #2563eb;
+        }
+        
+        .wizard-step {
+            padding: 0.5rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            border-radius: 20px;
+            font-weight: 600;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .wizard-step.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        .wizard-content {
+            min-height: 400px;
+        }
+        
+        .question-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .question-number {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background: #ef4444;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+        
+        .option-input {
+            padding: 0.6rem 0.8rem;
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.6);
+            color: #f1f5f9;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.3s;
+        }
+        
+        .option-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(15, 23, 42, 0.9);
+        }
+        
+        .option-a { border-left: 4px solid #ef4444; }
+        .option-b { border-left: 4px solid #3b82f6; }
+        .option-c { border-left: 4px solid #f59e0b; }
+        .option-d { border-left: 4px solid #10b981; }
+        
+        .correct-answer {
+            margin-top: 1rem;
+        }
+        
+        .correct-options {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .correct-option {
+            padding: 0.4rem 0.8rem;
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.6);
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .correct-option.selected {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .btn:hover::before { left: 100%; }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(71, 85, 105, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            margin-right: 0.5rem;
+        }
+        
+        .btn-secondary:hover { 
+            background: rgba(51, 65, 85, 0.9);
+            border-color: rgba(148, 163, 184, 0.5);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover { 
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+        }
+        
+        .actions {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 2px solid rgba(148, 163, 184, 0.2);
+        }
+        
+        .back-link {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            color: #e2e8f0;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .back-link:hover {
+            background: rgba(51, 65, 85, 0.9);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #f1f5f9;
+            transform: translateX(-3px);
+        }
+        
+        .hidden { display: none; }
+        
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.success {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.9), rgba(34, 153, 84, 0.9));
+        }
+        .notification.error {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9));
+        }
+        .notification.warning {
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.9), rgba(230, 126, 34, 0.9));
+        }
+        
+        /* Confirmation Dialog */
+        .confirm-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .confirm-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .confirm-dialog {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+        }
+        .confirm-overlay.show .confirm-dialog {
+            transform: scale(1) translateY(0);
+        }
+        .confirm-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #f1f5f9;
+        }
+        .confirm-message {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+        .confirm-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .confirm-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+        .confirm-btn.primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+        .confirm-btn.secondary {
+            background: rgba(71, 85, 105, 0.8);
+            color: #e2e8f0;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+        .confirm-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 1rem; margin: 1rem; }
+            .options-grid { grid-template-columns: 1fr; }
+            .correct-options { flex-wrap: wrap; }
+            .title { font-size: 1.5rem; }
+            .wizard-nav { flex-wrap: wrap; }
+            .notification {
+                top: 1rem;
+                right: 1rem;
+                left: 1rem;
+                transform: translateY(-100px);
+            }
+            .notification.show {
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back</a>
+    
+    <div class="container">
+        <div class="header">
+            <div class="title">🎯 Create New Game</div>
+            <div class="subtitle">Set up your quiz questions step by step</div>
+        </div>
+        
+        <form id="gameForm">
+            <div class="form-group">
+                <label class="form-label">Host Name</label>
+                <input type="text" class="form-input" id="hostName" placeholder="Enter your name" required>
+            </div>
+            
+            <div class="wizard-container">
+                <div class="wizard-nav" id="wizardNav">
+                    <!-- Steps will be added here -->
+                </div>
+                
+                <div class="wizard-content" id="wizardContent">
+                    <!-- Question forms will be added here -->
+                </div>
+                
+                <div class="actions">
+                    <button type="button" class="btn btn-secondary" id="prevBtn" onclick="prevStep()">← Previous</button>
+                    <button type="button" class="btn btn-secondary" id="addBtn" onclick="addQuestion()">+ Add Question</button>
+                    <button type="button" class="btn" id="nextBtn" onclick="nextStep()">Next →</button>
+                    <button type="submit" class="btn hidden" id="createBtn">🚀 Create Game</button>
+                    
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary" onclick="exportQuestions()">📤 Export</button>
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Import</button>
+                        <a href="/static/shared/sample-questions.json" download class="btn btn-secondary" style="text-decoration: none; display: inline-block;">📋 JSON</a>
+                        <a href="/static/shared/sample-questions.txt" download class="btn btn-secondary" style="text-decoration: none; display: inline-block;">📄 TXT</a>
+                        <a href="/static/shared/sample-aiken.txt" download class="btn btn-secondary" style="text-decoration: none; display: inline-block;">📚 Aiken</a>
+                        <input type="file" id="importFile" accept=".json,.txt" style="display: none;" onchange="importQuestions(event)">
+                    </div>
+                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #94a3b8; text-align: center;">
+                        Export: Save as JSON | Import: JSON, TXT, or Aiken | Sample: Download examples
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let questions = [];
+        let currentStep = 0;
+        
+        function addQuestion() {
+            if (questions.length >= 15) {
+                showNotification('Maximum 15 questions allowed!', 'warning');
+                return;
+            }
+            
+            // Save current step data before adding new question
+            if (currentStep >= 0 && currentStep < questions.length) {
+                saveCurrentStep();
+            }
+            
+            questions.push({
+                question: '',
+                image: '',
+                options: { A: '', B: '', C: '', D: '' },
+                correct: ''
+            });
+            
+            updateWizard();
+            currentStep = questions.length - 1;
+            showStep(currentStep);
+        }
+        
+        function removeQuestion(index) {
+            if (questions.length <= 1) {
+                showNotification('At least 1 question required!', 'warning');
+                return;
+            }
+            
+            questions.splice(index, 1);
+            if (currentStep >= questions.length) {
+                currentStep = questions.length - 1;
+            }
+            updateWizard();
+            showStep(currentStep);
+        }
+        
+        function updateWizard() {
+            const nav = document.getElementById('wizardNav');
+            nav.innerHTML = '';
+            
+            questions.forEach((_, index) => {
+                const step = document.createElement('div');
+                step.className = `wizard-step ${index === currentStep ? 'active' : ''}`;
+                step.textContent = `Q${index + 1}`;
+                step.onclick = () => showStep(index);
+                nav.appendChild(step);
+            });
+            
+            updateButtons();
+        }
+        
+        function showStep(step) {
+            if (step < 0 || step >= questions.length) {
+                console.log('Invalid step:', step, 'questions length:', questions.length);
+                return;
+            }
+            
+            // Save current step data
+            if (currentStep >= 0 && currentStep < questions.length && currentStep !== step) {
+                saveCurrentStep();
+            }
+            
+            currentStep = step;
+            console.log('Showing step:', step, 'question:', questions[step]);
+            
+            const content = document.getElementById('wizardContent');
+            const question = questions[step];
+            
+            content.innerHTML = `
+                <div class="question-card">
+                    <div class="question-number">Question ${step + 1}</div>
+                    <div class="form-group">
+                        <label class="form-label">Question</label>
+                        <input type="text" class="form-input" id="question_${step}" value="${question.question}" placeholder="Enter your question" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Question Image (Optional)</label>
+                        <input type="file" class="form-input" id="questionImage_${step}" accept="image/*" style="padding: 0.5rem;">
+                        <div class="file-info" style="font-size: 0.8rem; color: #6c757d; margin-top: 0.3rem;">Max size: 10MB (JPG, PNG, GIF)</div>
+                        ${question.image ? `<div class="image-preview"><img src="${question.image}" alt="Question image" style="max-width: 100%; max-height: 500px; margin-top: 0.5rem; border-radius: 8px; border: 2px solid #e9ecef;"></div>` : ''}
+                    </div>
+                    <div class="options-grid">
+                        <input type="text" class="option-input option-a" id="optionA_${step}" value="${question.options.A}" placeholder="Option A" required>
+                        <input type="text" class="option-input option-b" id="optionB_${step}" value="${question.options.B}" placeholder="Option B" required>
+                        <input type="text" class="option-input option-c" id="optionC_${step}" value="${question.options.C}" placeholder="Option C" required>
+                        <input type="text" class="option-input option-d" id="optionD_${step}" value="${question.options.D}" placeholder="Option D" required>
+                    </div>
+                    <div class="correct-answer">
+                        <div class="form-label">Correct Answer</div>
+                        <div class="correct-options">
+                            <div class="correct-option ${question.correct === 'A' ? 'selected' : ''}" onclick="selectCorrect(this, 'A')">A</div>
+                            <div class="correct-option ${question.correct === 'B' ? 'selected' : ''}" onclick="selectCorrect(this, 'B')">B</div>
+                            <div class="correct-option ${question.correct === 'C' ? 'selected' : ''}" onclick="selectCorrect(this, 'C')">C</div>
+                            <div class="correct-option ${question.correct === 'D' ? 'selected' : ''}" onclick="selectCorrect(this, 'D')">D</div>
+                        </div>
+                        ${questions.length > 1 ? `<button type="button" class="btn btn-danger" onclick="removeQuestion(${step})" style="margin-top: 1rem; width: 100%;">🗑️ Delete Question</button>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            updateWizard();
+            setupImagePreview(step);
+            
+            // Ensure wizard navigation is updated
+            document.querySelectorAll('.wizard-step').forEach((el, idx) => {
+                el.classList.toggle('active', idx === step);
+            });
+        }
+        
+        function saveCurrentStep() {
+            const step = currentStep;
+            const question = questions[step];
+            
+            const questionEl = document.getElementById(`question_${step}`);
+            const optionAEl = document.getElementById(`optionA_${step}`);
+            const optionBEl = document.getElementById(`optionB_${step}`);
+            const optionCEl = document.getElementById(`optionC_${step}`);
+            const optionDEl = document.getElementById(`optionD_${step}`);
+            
+            if (questionEl) question.question = questionEl.value;
+            // Image is already saved in setupImagePreview
+            if (optionAEl) question.options.A = optionAEl.value;
+            if (optionBEl) question.options.B = optionBEl.value;
+            if (optionCEl) question.options.C = optionCEl.value;
+            if (optionDEl) question.options.D = optionDEl.value;
+        }
+        
+        function selectCorrect(element, answer) {
+            element.parentNode.querySelectorAll('.correct-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            questions[currentStep].correct = answer;
+        }
+        
+        function prevStep() {
+            if (currentStep > 0) {
+                showStep(currentStep - 1);
+            }
+        }
+        
+        function nextStep() {
+            if (currentStep < questions.length - 1) {
+                showStep(currentStep + 1);
+            }
+        }
+        
+        function updateButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const addBtn = document.getElementById('addBtn');
+            const createBtn = document.getElementById('createBtn');
+            
+            prevBtn.style.display = currentStep === 0 ? 'none' : 'inline-block';
+            nextBtn.style.display = currentStep === questions.length - 1 ? 'none' : 'inline-block';
+            createBtn.style.display = currentStep === questions.length - 1 ? 'inline-block' : 'none';
+            addBtn.textContent = questions.length >= 15 ? 'Max 15 Questions' : `+ Add Question (${questions.length}/15)`;
+            addBtn.disabled = questions.length >= 15;
+        }
+        
+        // Initialize with 1 question
+        if (questions.length === 0) {
+            addQuestion();
+        } else {
+            // If questions already exist (from import), show first one
+            currentStep = 0;
+            updateWizard();
+            showStep(0);
+        }
+        
+        // Add image preview functionality
+        function setupImagePreview(step) {
+            const imageInput = document.getElementById(`questionImage_${step}`);
+            if (imageInput) {
+                imageInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    const previewContainer = this.parentNode.querySelector('.image-preview');
+                    
+                    if (previewContainer) {
+                        previewContainer.remove();
+                    }
+                    
+                    if (file) {
+                        // Check file size (10MB = 10 * 1024 * 1024 bytes)
+                        if (file.size > 10 * 1024 * 1024) {
+                            showNotification('File size must be less than 10MB', 'error');
+                            this.value = '';
+                            return;
+                        }
+                        
+                        // Check file type
+                        if (!file.type.startsWith('image/')) {
+                            showNotification('Please select an image file', 'error');
+                            this.value = '';
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const preview = document.createElement('div');
+                            preview.className = 'image-preview';
+                            preview.innerHTML = `<img src="${e.target.result}" alt="Question image" style="max-width: 100%; max-height: 500px; margin-top: 0.5rem; border-radius: 8px; border: 2px solid #e9ecef;">`;
+                            imageInput.parentNode.appendChild(preview);
+                            
+                            // Store base64 data in question object
+                            questions[step].image = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        // Clear image if no file selected
+                        questions[step].image = '';
+                    }
+                });
+            }
+        }
+        
+        // Import/Export functions
+        function exportQuestions() {
+            if (questions.length === 0) {
+                showNotification('No questions to export!', 'warning');
+                return;
+            }
+            
+            saveCurrentStep();
+            
+            const exportData = {
+                version: '1.0',
+                created: new Date().toISOString(),
+                questions: questions.map(q => ({
+                    question: q.question,
+                    options: q.options,
+                    correct: q.correct,
+                    image: q.image || ''
+                }))
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `quiz-questions-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function importQuestions(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                let parsedQuestions = [];
+                
+                try {
+                    if (file.name.endsWith('.json')) {
+                        // JSON format
+                        const data = JSON.parse(content);
+                        if (!data.questions || !Array.isArray(data.questions)) {
+                            throw new Error('Invalid JSON format');
+                        }
+                        parsedQuestions = data.questions;
+                    } else {
+                        // TXT format - parse simple text format
+                        parsedQuestions = parseTextQuestions(content);
+                    }
+                    
+                    // Validate questions
+                    const validQuestions = parsedQuestions.filter(q => 
+                        q.question && q.options && q.options.A && q.options.B && 
+                        q.options.C && q.options.D && q.correct
+                    );
+                    
+                    if (validQuestions.length === 0) {
+                        showNotification('No valid questions found in file!', 'error');
+                        return;
+                    }
+                    
+                    showConfirmDialog(`Import ${validQuestions.length} questions?`, 'This will replace current questions.', () => {
+                        questions = validQuestions.map(q => ({
+                            question: q.question,
+                            options: { A: q.options.A, B: q.options.B, C: q.options.C, D: q.options.D },
+                            correct: q.correct,
+                            image: q.image || ''
+                        }));
+                        
+                        // Reset to first question
+                        currentStep = 0;
+                        updateWizard();
+                        
+                        // Force show first question
+                        if (questions.length > 0) {
+                            showStep(0);
+                        }
+                        
+                        showNotification(`Successfully imported ${questions.length} questions!`, 'success');
+                    });
+                } catch (error) {
+                    showNotification('Error reading file. Please check the format.', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input
+        }
+        
+        function parseTextQuestions(content) {
+            // Try Aiken format first
+            const aikenQuestions = parseAikenFormat(content);
+            if (aikenQuestions.length > 0) {
+                return aikenQuestions;
+            }
+            
+            // Fallback to simple format
+            const questions = [];
+            const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+            
+            let currentQuestion = null;
+            let optionCount = 0;
+            
+            for (let line of lines) {
+                // Question line (starts with Q: or just text)
+                if (line.match(/^Q\d*[:.]/i) || (!currentQuestion && !line.match(/^[A-D][:.]/i))) {
+                    if (currentQuestion && currentQuestion.question) {
+                        questions.push(currentQuestion);
+                    }
+                    currentQuestion = {
+                        question: line.replace(/^Q\d*[:.]/i, '').trim(),
+                        options: { A: '', B: '', C: '', D: '' },
+                        correct: '',
+                        image: ''
+                    };
+                    optionCount = 0;
+                }
+                // Option lines (A: B: C: D:)
+                else if (line.match(/^[A-D][:.]/i) && currentQuestion) {
+                    const option = line.charAt(0).toUpperCase();
+                    const text = line.substring(2).trim();
+                    currentQuestion.options[option] = text;
+                    optionCount++;
+                }
+                // Answer line (Answer: A or *A or Correct: A)
+                else if (line.match(/^(answer|correct|\*)[:.\s]*[A-D]/i) && currentQuestion) {
+                    const match = line.match(/[A-D]/i);
+                    if (match) {
+                        currentQuestion.correct = match[0].toUpperCase();
+                    }
+                }
+                // Simple format: just 4 lines after question
+                else if (currentQuestion && !currentQuestion.options.A && optionCount < 4) {
+                    const options = ['A', 'B', 'C', 'D'];
+                    currentQuestion.options[options[optionCount]] = line;
+                    optionCount++;
+                }
+            }
+            
+            // Add last question
+            if (currentQuestion && currentQuestion.question) {
+                questions.push(currentQuestion);
+            }
+            
+            // Auto-assign correct answer if not specified (default to A)
+            questions.forEach(q => {
+                if (!q.correct) q.correct = 'A';
+            });
+            
+            return questions;
+        }
+        
+        function parseAikenFormat(content) {
+            const questions = [];
+            const blocks = content.split(/\n\s*\n/).filter(block => block.trim());
+            
+            for (let block of blocks) {
+                const lines = block.split('\n').map(line => line.trim()).filter(line => line);
+                if (lines.length < 6) continue; // Need question + 4 options + answer
+                
+                let questionText = '';
+                let options = { A: '', B: '', C: '', D: '' };
+                let correct = '';
+                
+                // First line is the question
+                questionText = lines[0];
+                
+                // Parse options A-D
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    
+                    // Check for option format: A) text or A. text
+                    const optionMatch = line.match(/^([A-D])[.)\s]\s*(.+)$/);
+                    if (optionMatch) {
+                        options[optionMatch[1]] = optionMatch[2].trim();
+                    }
+                    
+                    // Check for answer format: ANSWER: C
+                    const answerMatch = line.match(/^ANSWER:\s*([A-D])$/i);
+                    if (answerMatch) {
+                        correct = answerMatch[1].toUpperCase();
+                    }
+                }
+                
+                // Validate and add question
+                if (questionText && options.A && options.B && options.C && options.D && correct) {
+                    questions.push({
+                        question: questionText,
+                        options: options,
+                        correct: correct,
+                        image: ''
+                    });
+                }
+            }
+            
+            return questions;
+        }
+        
+        document.getElementById('gameForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            saveCurrentStep();
+            
+            const hostName = document.getElementById('hostName').value;
+            
+            // Validate all questions
+            for (let i = 0; i < questions.length; i++) {
+                const q = questions[i];
+                if (!q.question || !q.options.A || !q.options.B || !q.options.C || !q.options.D || !q.correct) {
+                    showNotification(`Please complete Question ${i + 1}`, 'error');
+                    showStep(i);
+                    return;
+                }
+            }
+            
+            try {
+                const response = await fetch('/api/create-game', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ host_name: hostName, questions: questions })
+                });
+                
+                const data = await response.json();
+                window.location.href = `/host/lobby/${data.pin}`;
+            } catch (error) {
+                showNotification('Error creating game. Please try again.', 'error');
+            }
+        });
+        
+        // Modern Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 400);
+            }, 3000);
+        }
+        
+        // Modern Confirmation Dialog
+        function showConfirmDialog(title, message, onConfirm) {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.innerHTML = `
+                <div class="confirm-dialog">
+                    <div class="confirm-title">${title}</div>
+                    <div class="confirm-message">${message}</div>
+                    <div class="confirm-buttons">
+                        <button class="confirm-btn secondary" onclick="closeConfirmDialog()">Cancel</button>
+                        <button class="confirm-btn primary" onclick="confirmAction()">Confirm</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.classList.add('show'), 100);
+            
+            window.closeConfirmDialog = () => {
+                overlay.classList.remove('show');
+                setTimeout(() => document.body.removeChild(overlay), 300);
+                delete window.closeConfirmDialog;
+                delete window.confirmAction;
+            };
+            
+            window.confirmAction = () => {
+                onConfirm();
+                window.closeConfirmDialog();
+            };
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Game - Modern Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/lib/fonts-local.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/host.css">
+</head>
+<body>
+    <a href="/" class="back-link">← Back</a>
+    
+    <div class="container">
+        <div class="header">
+            <div class="title">🎯 Create New Game</div>
+            <div class="subtitle">Set up your quiz questions step by step</div>
+        </div>
+        
+        <form id="gameForm">
+            <div class="form-group">
+                <label class="form-label">Host Name</label>
+                <input type="text" class="form-input" id="hostName" placeholder="Enter your name" required>
+            </div>
+            
+            <div class="wizard-container">
+                <div class="wizard-nav" id="wizardNav">
+                    <!-- Steps will be added here -->
+                </div>
+                
+                <div class="wizard-content" id="wizardContent">
+                    <!-- Question forms will be added here -->
+                </div>
+                
+                <div class="actions">
+                    <button type="button" class="btn btn-secondary" id="prevBtn" onclick="prevStep()">← Previous</button>
+                    <button type="button" class="btn btn-secondary" id="addBtn" onclick="addQuestion()">+ Add Question</button>
+                    <button type="button" class="btn" id="nextBtn" onclick="nextStep()">Next →</button>
+                    <button type="submit" class="btn hidden" id="createBtn">🚀 Create Game</button>
+                    
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary" onclick="exportQuestions()">📤 Export</button>
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Import</button>
+                        <a href="/static/shared/sample-questions.json" download class="btn btn-secondary" style="text-decoration: none; display: inline-block;">📋 JSON</a>
+                        <a href="/static/shared/sample-questions.txt" download class="btn btn-secondary" style="text-decoration: none; display: inline-block;">📄 TXT</a>
+                        <a href="/static/shared/sample-aiken.txt" download class="btn btn-secondary" style="text-decoration: none; display: inline-block;">📚 Aiken</a>
+                        <input type="file" id="importFile" accept=".json,.txt" style="display: none;" onchange="importQuestions(event)">
+                    </div>
+                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #94a3b8; text-align: center;">
+                        Export: Save as JSON | Import: JSON, TXT, or Aiken | Sample: Download examples
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="/static/js/host.js"></script>
+</body>
+</html>
