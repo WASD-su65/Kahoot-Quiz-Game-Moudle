@@ -129,6 +129,8 @@ At the end of the game, the player with the highest score wins!
 - **Data Source**: JSON (static or fetched)
 - **Sound Integration**: JavaScript (**Audio()** API)
 
+**TH**
+
 - Fork รีโพจิทอรีนี้
 - สร้าง branch ใหม่ (feature/your-feature)
 - ทำการแก้ไขและทดสอบให้เรียบร้อย
