@@ -127,7 +127,7 @@ At the end of the game, the player with the highest score wins!
 # 🧩 Contributing / การมีส่วนร่วม
 - **Frontend**: HTML, CSS, JavaScript
 - **Data Source**: JSON (static or fetched)
-- **Sound Integration**: JavaScript (Audio() API)
+- **Sound Integration**: JavaScript (**Audio()** API)
 
 - Fork รีโพจิทอรีนี้
 - สร้าง branch ใหม่ (feature/your-feature)
