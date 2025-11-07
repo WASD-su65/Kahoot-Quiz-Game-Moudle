@@ -125,6 +125,9 @@ At the end of the game, the player with the highest score wins!
 - คะแนนจะถูกคำนวณตามเวลาการตอบและความถูกต้อง ผู้ที่มีคะแนนสูงสุดจะเป็นผู้ชนะ
 
 # 🧩 Contributing / การมีส่วนร่วม
+
+**ENG**
+
 - **Frontend**: HTML, CSS, JavaScript
 - **Data Source**: JSON (static or fetched)
 - **Sound Integration**: JavaScript (**Audio()** API)
